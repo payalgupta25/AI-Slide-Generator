@@ -1,0 +1,5 @@
+Slide_Number,Title,Subtitle,Bullet_1,Bullet_2,Bullet_3,Image_Path
+1,Introduction,Overview of the Project,Project background,Objectives,Scope,images/intro.png
+2,Problem Statement,What issue are we solving?,Current challenges,User pain points,Impact,images/problem.png
+3,Solution,How our solution works,Architecture overview,Key features,Technology stack,images/solution.png
+4,Conclusion,Final Thoughts,Summary,Future scope,Thank you,images/conclusion.png
