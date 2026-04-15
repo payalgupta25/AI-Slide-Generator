@@ -1,32 +1,52 @@
 import streamlit as st
-import requests
-
-BASE_URL = "http://127.0.0.1:8000"
+import os
+import asyncio
+# Import your agent classes directly
+from src.agents.content_extractor import ContentExtractor
+from src.agents.summarizer import Summarizer
+from src.agents.slide_generator import SlideGenerator
 
 st.set_page_config(page_title="AI Slide Generator", layout="centered")
-
 st.title("AI based Slide Generator")
-st.write("Upload a file or enter text to generate a slide.")
 
 upload_file = st.file_uploader("Upload a file", type=["txt", "pdf", "docx", "csv"])
 
 if upload_file is not None:
-    st.success("File uploaded successfully!")
-
-    files={"file":upload_file}
-    upload_response = requests.post(f"{BASE_URL}/upload/", files=files)
-
-    if upload_response.status_code == 200:
-        st.write("File uploaded successfully!")
+    # 1. Save file locally in the cloud instance
+    upload_dir = "uploads/"
+    os.makedirs(upload_dir, exist_ok=True)
+    file_path = os.path.join(upload_dir, upload_file.name)
+    with open(file_path, "wb") as f:
+        f.write(upload_file.getbuffer())
+    
+    st.success(f"File '{upload_file.name}' ready for processing!")
 
     if st.button("Generate Slide"):
-        generate_response = requests.get(f"{BASE_URL}/generate/")
+        with st.spinner("Analyzing content and generating PPTX..."):
+            try:
+                # 2. Run your Agent logic directly (No FastAPI call needed)
+                extractor = ContentExtractor(directory=upload_dir)
+                extracted_content = extractor.extract_from_directory()
 
-        if generate_response.status_code == 200:
-            st.success("Presentation generated successfully!")
-            download_url = f"{BASE_URL}/download/?filename=output/generated_presentation.pptx"
-            st.markdown(f"[Download Presentation]({download_url})", unsafe_allow_html=True)
-        else:
-            st.error("Failed to generate presentation.")
-else:
-    st.error("Please upload a file or enter text.")
+                summarizer = Summarizer()
+                slide_generator = SlideGenerator(output_dir="output/")
+
+                for filename, text in extracted_content.items():
+                    # Use asyncio.run to call your async summarizer
+                    summary = asyncio.run(summarizer.summarize_text(text))
+                    summary_points = [p.strip() for p in summary.split("\n") if p.strip()]
+                    slide_generator.add_slide(filename, summary_points)
+
+                pptx_path = "output/generated_presentation.pptx"
+                
+                # 3. Provide native Streamlit download button
+                if os.path.exists(pptx_path):
+                    with open(pptx_path, "rb") as f:
+                        st.download_button(
+                            label="📥 Download Presentation",
+                            data=f,
+                            file_name="generated_presentation.pptx",
+                            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                        )
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
