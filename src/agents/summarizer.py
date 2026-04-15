@@ -45,7 +45,7 @@ if __name__ == "__main__":
     """
 
     summarizer = Summarizer()
-    summary = summarizer.summarize_text(text)
+    summary = asyncio.run(summarizer.summarize_text(text))
 
     print("\n **Summary:**\n")
     print(summary)
