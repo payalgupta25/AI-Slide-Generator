@@ -21,6 +21,8 @@ if upload_file is not None:
     
     st.success(f"File '{upload_file.name}' ready for processing!")
 
+    num_slides = st.slider("Select number of slides", min_value=2, max_value=15, value=5)
+
     if st.button("Generate Slide"):
         with st.spinner("Analyzing content and generating PPTX..."):
             try:
@@ -33,7 +35,7 @@ if upload_file is not None:
 
                 for filename, text in extracted_content.items():
                     # Use asyncio.run to call your async summarizer
-                    summary = asyncio.run(summarizer.summarize_text(text))
+                    summary = asyncio.run(summarizer.summarize_text(text, num_slides=num_slides))
                     summary_points = [p.strip() for p in summary.split("\n") if p.strip()]
                     slide_generator.add_slide(filename, summary_points)
 

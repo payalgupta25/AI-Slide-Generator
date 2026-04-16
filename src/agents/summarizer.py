@@ -23,13 +23,31 @@ class Summarizer:
             model_name="BAAI/bge-small-en-v1.5"
         )
 
-    async def summarize_text(self, text):
+    async def summarize_text(self, text, num_slides):
         documents = [Document(text=text)]
         index = VectorStoreIndex.from_documents(documents)
         query_engine = index.as_query_engine()
 
         response = await query_engine.aquery(
-            "Convert this into structured PowerPoint slides with title and bullet points"
+           f"""
+        Analyze the provided text and create exactly {num_slides} PowerPoint slides.
+        
+        STRICT FORMATTING RULES:
+        1. Separate each slide with triple dashes: ---
+        2. The first line of each slide MUST be the Title.
+        3. Follow the title with 3-5 concise bullet points.
+        4. Do NOT use markdown bolding like '**' or 'Slide 1:'.
+        5. Do NOT include any introductory or concluding text.
+
+        Example:
+        Company Overview
+        - Founded in 2010
+        - Leader in Cloud AI
+        ---
+        Core Services
+        - Managed Hosting
+        - Cyber Security
+        """
         )
 
         return str(response)
